@@ -238,36 +238,63 @@ Table 4: Overview of the CPU performance using the Perf profiler (Vector)  - 256
                                                   #    0.00  stalled cycles per insn  (43.83%)
        24049493330      branches:u                # 1063.889 M/sec                    (44.21%)
           37912060      branch-misses:u           #    0.16% of all branches          (44.93%)
-       75072246502      L1-dcache-loads:u         # 3321.007 M/sec                    (43.76%)
+       75072246502      L1-dcache-loads:u         # 37 M/sec                    (43.76%)
         2712585424      L1-dcache-load-misses:u   #    3.61% of all L1-dcache accesses  (42.58%) 
          734224320      L1-icache-loads:u         #   32.480 M/sec                    (41.64%)
            5115763      L1-icache-load-misses:u   #    0.70% of all L1-icache accesses  (40.56%)
           42715155      dTLB-loads:u              #    1.890 M/sec                    (39.98%)
           14381688      dTLB-load-misses:u        #   33.67% of all dTLB cache accesses  (39.27%)
-           4527809      iTLB-loads:u              #    0.200 M/sec                    (38.43%)
+           4527809      iTLB-loads:u              #   321.00 0.200 M/sec                    (38.43%)
            1796290      iTLB-load-misses:u        #   39.67% of all iTLB cache accesses  (38.38%)
         2479389093      L1-dcache-prefetches:u    #  109.682 M/sec                    (38.77%)
 
 
 Analysis
--  
-- We see that the vector implementation is faster than both scalar implementations across every array size
-  - Seems to scale linearly with array size for vector and scalar1 implementation
-  - Vector implementation is roughly only 1.5x faster than the first scalar implementation across all array sizes, but much faster than the
-  apache maths scalar implementation
-- When we compare IPC across implementations, the first scalar and vector implementation have similar IPC
-  - On average they are at ~2.6 and ~2.3
-  - However, the apache maths has a lower IPC at 1.5
-  - The vector implementation does seem to have similar if slighltly more instructions than the scalar, but apache maths has much less instructions
-- Additionally, looking at memory allocation and GC, Vector Black scholes has much higher allocation rate than either scalar implementation
-- These results were run on a Ryzen 5800X. As a result, I am only using 256 bit width vectors, allowing for processing up
-to 4 doubles at once. For a fixed number of instructions then, and given the same CPU frequency, we would expect the
-speedup to be at a theoretical 4x between the vector and scalar1
-- However, there are a few reasons why this may not be achieved
-  - JVM does autovectorization so it's not truly scalar vs vector
-  - There are differences in IPC, clock speed and # of instructons that could play a role
-  - GC slowing down vectorization?
-  - Are we really using the correct instructions? Fairly certain we are
+- 
+- Basic Terminology:
+  - 
+  - Memory allocation rate - the rate (MB/S) of memory being used inside the Young Gen (Which is part of the JVM heap)
+    - The Young Gen is split by Eden, S0, S1. 
+    - The GC of the Young Gen is defined as Minor GC. You have your "Old Mem" and major GC, both of which are still part of the heap mem
+    - So the allocation rates here refer to young gen here 
+    - Online, it seems < 1GB/second is fine. Remember that the rate of CPU's from its cache is VERY fast/high bandwith, and ~25GB for a Zen3 core I believe
+  - IPC refers to Instructions Per Cycle, i.e. for each CPU cycle, how many instructions are executed for a given cycle
+    - This is important to 
+- Why are these important?
+    - Memory allocation rates are important because the more memory being allocated,the more GC tends to be done
+      - GC pauses threads while it collects garbage/not used objects - introducing latency and potentially stutter
+      - In order to have millisecond level optimization -> ensure your application is not destroying the GC
+    - IPC is important because we need to understand the impact of vectorization on the CPU to fully understand it
+      - Additionally, if we can figure out how cache-heavy our application is, we can choose more suitable processing environments
+      - 
+- Overall Performance and IPC
+  - 
+  - We see that the vector implementation is faster than both scalar implementations across every array size
+    - Seems to scale linearly with array size for vector and scalar1 implementation
+    - Vector implementation is roughly only 1.5x faster than the first scalar implementation across all array sizes, but much faster than the
+    apache maths scalar implementation
+  - When we compare IPC across implementations, the first scalar and vector implementation have similar IPC
+    - On average they are at ~2.6 and ~2.3
+    - However, the apache maths has a lower IPC at 1.5
+    - The vector implementation does seem to have similar if slighltly more instructions than the scalar, but apache maths has much less instructions
+- Memory Allocation/Pressure
+  - 
+  - Looking at memory allocation characteristics, Vector Black scholes has much higher allocation rate than either scalar implementation
+  - Roughly it seems to be ~5GB/second which is higher than reccomended online value, while the others are well below <200MB/S
+  - This implies that lots of objects are being created on the heap, specifically the Eden space. 
+  - When doing vectorization, we're creating these DoubleVectors within the loop method. This generates objects for each loop cycle (complex ones)
+  - This results in big stack/big eden memories I assume
+  - Increasing Eden Memory decreased GC count and time significantly, (less than half the time allocated to GC)
+- General Concerns
+  - 
+  - These results were run on a Ryzen 5800X. As a result, I am only using 256 bit width vectors, allowing for processing up
+  to 4 doubles at once. For a fixed number of instructions then, and given the same CPU frequency, we would expect the
+  speedup to be at a theoretical 4x between the vector and scalar1
+  - However, there are a few reasons why this may not be achieved
+    - JVM does autovectorization so it's not truly scalar vs vector
+    - There are differences in IPC, clock speed and # of instructons that could play a role
+    - GC slowing down vectorization?
+    - Are we really using the correct instructions? Fairly certain we are
 
 Future Work
 - 
@@ -285,3 +312,12 @@ Problems I encountered along the way
 - 
 - See: https://stackoverflow.com/questions/74011238/understanding-java-17-vector-slowness-and-performance-with-pow-operator?noredirect=1#comment130684999_74011238 
 
+Notes After the Update:
+> Task :javaPerf:run
+WARNING: Using incubator modules: jdk.incubator.vector
+#######STARTING#######
+SCALAR TIME (ms): 945
+VECTOR TIME (ms): 839
+VECTOR TIME - CALC TIME ONLY (ms): 869
+#######FINISHED#######
+> 

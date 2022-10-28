@@ -25,6 +25,7 @@ repositories {
 
 dependencies {
     implementation("org.apache.commons:commons-math3:3.6.1")
+    implementation("org.jetbrains:annotations:20.1.0")
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     implementation("org.openjdk.jmh:jmh-core:1.35")
@@ -41,10 +42,14 @@ tasks {
         applicationName = "javaPerf"
         if (project.hasProperty("debug")) {
             defaultJvmOpts = listOf("--enable-preview", "--add-modules", "jdk.incubator.vector",
-                "-XX:+UnlockDiagnosticVMOptions", "-XX:+PrintIntrinsics","-XX:+PrintAssembly","-Xmx16000M")
+                "-XX:+UnlockDiagnosticVMOptions",
+                "-XX:CompileThreshold=100", "-XX:InlineSmallCode=100",
+                "-XX:+PrintCompilation",  "-XX:+PrintInlining", "-XX:+PrintIntrinsics",
+                "-XX:+PrintAssembly","-XX:PrintAssemblyOptions=intel",
+                "-Xmx16000M", "-XX:NewSize=8G")
         }
         else{
-            defaultJvmOpts = listOf("--enable-preview", "--add-modules", "jdk.incubator.vector","-Xmx16000M")
+            defaultJvmOpts = listOf("--enable-preview", "--add-modules", "jdk.incubator.vector","-Xmx16000M", "-XX:NewSize=8G")
         }
     }
     withType<Jar> {
@@ -64,7 +69,11 @@ tasks {
     withType<JavaExec> {
         if (project.hasProperty("debug")) {
             jvmArgs = listOf("--enable-preview", "--add-modules", "jdk.incubator.vector",
-                "-XX:+UnlockDiagnosticVMOptions", "-XX:+PrintIntrinsics","-XX:+PrintAssembly","-Xmx16000M")
+                "-XX:+UnlockDiagnosticVMOptions",
+                "-XX:CompileThreshold=100","-XX:InlineSmallCode=100",
+//                "-XX:+PrintCompilation",  "-XX:+PrintInlining", "-XX:+PrintIntrinsics",
+//                "-XX:+PrintAssembly","-XX:PrintAssemblyOptions=intel",
+                "-Xmx16000M")
         }
         else{
             jvmArgs = listOf("--enable-preview", "--add-modules", "jdk.incubator.vector","-Xmx16000M")
@@ -72,13 +81,13 @@ tasks {
 
     }
     withType<JmhBytecodeGeneratorTask> {
-        jvmArgs.addAll(listOf("--enable-preview", "--add-modules", "jdk.incubator.vector","-Xmx12000M",))
+        jvmArgs.addAll(listOf("--enable-preview", "--add-modules", "jdk.incubator.vector","-Xmx16000M"))
     }
     withType<JMHTask> {
-        jvmArgs.addAll(listOf("--enable-preview", "--add-modules", "jdk.incubator.vector","-Xmx12000M"))
+        jvmArgs.addAll(listOf("--enable-preview", "--add-modules", "jdk.incubator.vector","-Xmx16000M", "-XX:NewSize=8G"))
         profilers.addAll(listOf("perf","stack", "gc") )// includes the linux perf profiler for ipc and cache miss info
-        warmupIterations.set(2)
-        iterations.set(2)
+        warmupIterations.set(3)
+        iterations.set(3)
         fork.set(2)
         resultFormat.set("csv")
 //        logging.captureStandardOutput(LogLevel.LIFECYCLE)

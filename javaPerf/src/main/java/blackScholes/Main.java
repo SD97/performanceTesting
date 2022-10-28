@@ -1,6 +1,7 @@
 package blackScholes;
 
 import jdk.incubator.vector.DoubleVector;
+import jdk.incubator.vector.VectorSpecies;
 
 public class Main {
 
@@ -18,7 +19,8 @@ public class Main {
     {
         System.out.println("#######STARTING#######");
         //initialize
-        int arraySize=5120000;
+        int arraySize=25600000;
+        VectorSpecies<Double> SPECIES = DoubleVector.SPECIES_PREFERRED;
         double[] spotPrices = createArray(arraySize);
         double[] timeToMaturity = createArray(arraySize);
         double[] strikePrice = createArray(arraySize);
@@ -27,7 +29,8 @@ public class Main {
 
         JavaSIMD javaSIMD = new JavaSIMD();
         JavaScalar javaScalar = new JavaScalar();
-        var upperBound = javaSIMD.SPECIES.loopBound(spotPrices.length);
+        var upperBound = SPECIES.loopBound(spotPrices.length);
+        DoubleVector[][] vectorizedArrays = new DoubleVector[arraySize][];
 
         //blackscholes call - scalar
         Long start1 =  System.currentTimeMillis();
@@ -36,18 +39,33 @@ public class Main {
 
         //blackscholes call - vectorized
         Long start2 =  System.currentTimeMillis();
-        DoubleVector[] vectorOutput = javaSIMD.blackScholesVectorized(spotPrices,timeToMaturity,strikePrice, interestRate,volatility, upperBound);
+        double[] vectorOutput = javaSIMD.blackScholesVectorized(spotPrices,timeToMaturity,strikePrice, interestRate,volatility);
         Long finish2 =  System.currentTimeMillis();
 
-        //blackscholes call - scalar apache CDF
-        Long start3 =  System.currentTimeMillis();
-        double[] scalarOutput2 = javaScalar.blackScholesScalarWithApacheCDF(spotPrices,timeToMaturity,strikePrice, interestRate,volatility);
+        double[] callValues = new double[spotPrices.length];
+        int j=0;
+        for (var i=0;i<upperBound; i+= SPECIES.length()) {
+            vectorizedArrays[j]=JavaSIMD.createVectorizedArrays(spotPrices, timeToMaturity, strikePrice, interestRate, volatility, i);
+            j+=1;
+        }
+
+        Long start3 = System.currentTimeMillis();
+        j=0;
+        for (var i=0;i<upperBound; i+= SPECIES.length()) {
+            javaSIMD.calculateBlackScholesSingleCycle(vectorizedArrays[j], i, callValues);
+            j+=1;
+        }
         Long finish3 =  System.currentTimeMillis();
 
-        //print out
-        System.out.println("SCALAR TIME (ms):"+ (finish1-start1));
-        System.out.println("SCALAR TIME (ms):"+ (finish3-start3));
-        System.out.println("VECTOR TIME (ms):"+ (finish2-start2));
+//        //blackscholes call - scalar apache CDF
+//        Long start4 =  System.currentTimeMillis();
+//        double[] scalarOutput2 = javaScalar.blackScholesScalarWithApacheCDF(spotPrices,timeToMaturity,strikePrice, interestRate,volatility);
+//        Long finish4 =  System.currentTimeMillis();
+
+        System.out.println("SCALAR TIME (ms): "+ (finish1-start1));
+//        System.out.println("SCALAR TIME (ms):"+ (finish4-start4));
+        System.out.println("VECTOR TIME (ms): "+ (finish2-start2));
+        System.out.println("VECTOR TIME - CALC TIME ONLY (ms): "+ (finish3-start3));
         System.out.println("#######FINISHED#######");
     }
 
