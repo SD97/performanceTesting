@@ -13,12 +13,12 @@ public class TestBlackScholes {
 
     JavaScalar javaScalar = new JavaScalar();
     JavaSIMD javaSIMD = new JavaSIMD();
-    double[] spotPrices = new double[]{5,10,0.5,0.325}; //$
-    double[] timeToMaturity = new double[]{5,10,0.5,0.01}; //year
-    double[] strikePrice = new double[]{5,10,0.5,0.2}; //$
-    double[] interestRate = new double[]{5,10,0.5,0.325}; //as a percent
-    double[] volatility = new double[]{5,10,0.5,0.325}; //as a percent
-    double[] expectedValues = new double[]{1.108,6.322,0.001, 0.125};
+    double[] spotPrices = new double[]{5,10,0.5}; //$ //0.325
+    double[] timeToMaturity = new double[]{5,10,0.5}; //year //0.01
+    double[] strikePrice = new double[]{5,10,0.5}; //$ //0.2
+    double[] interestRate = new double[]{5,10,0.5}; //as a percent //0.325
+    double[] volatility = new double[]{5,10,0.5}; //as a percent //0.325
+    double[] expectedValues = new double[]{1.108,6.322,0.001}; //0.125
 
     VectorSpecies<Double> SPECIES = DoubleVector.SPECIES_PREFERRED;
     public void assertValuesInList(double[] actualValues)

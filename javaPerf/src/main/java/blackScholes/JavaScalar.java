@@ -41,6 +41,9 @@ public class JavaScalar {
         return call;
     }
 
+    /*
+    * Another scalar impl used previously
+    * */
     public double[] blackScholesScalarWithApacheCDF(double[] spotPrices,double[] timeToMaturity,double[] strikePrice,
                                        double[] interestRate,double[] volatility)
     {

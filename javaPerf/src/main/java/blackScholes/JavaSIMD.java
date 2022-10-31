@@ -3,8 +3,6 @@ package blackScholes;
 import jdk.incubator.vector.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-
 public class JavaSIMD
 {
     // Recommended that the species var be static final
@@ -13,7 +11,7 @@ public class JavaSIMD
 
     private static final  VectorSpecies<Double> SPECIES = DoubleVector.SPECIES_PREFERRED;
     private static final DoubleVector vectorHalf=  DoubleVector.broadcast(SPECIES,0.5);
-    DoubleVector vectorOne = DoubleVector.broadcast(SPECIES,1);
+    private static final  DoubleVector vectorOne = DoubleVector.broadcast(SPECIES,1);
 
     double[] blackScholesVectorized(double[] spotPrices, double[] timeToMaturity, double[] strikePrice,
                                                 double[] interestRate, double[] volatility)
@@ -69,61 +67,50 @@ public class JavaSIMD
 
     private void calculateD3(DoubleVector[] vectorArrays, double[] callValues,int i, DoubleVector d1, DoubleVector d2)
     {
-//        System.out.println(Arrays.stream(vectorArrays).sequential().toList().toString());
         DoubleVector vSpot =vectorArrays[0];
         DoubleVector vTime =vectorArrays[1];
         DoubleVector vIR =vectorArrays[3];
         DoubleVector cdfValueD1 = CDFVectorizedExcel(d1);
         DoubleVector cdfValueD2 = CDFVectorizedExcel(d2);
-        ((vSpot
-                .mul(cdfValueD1))
-                .sub(vTime
-                        .mul((vIR
-                                .mul(vTime)
-                                .neg())
-                                .lanewise(VectorOperators.EXP))
-                        .mul(cdfValueD2))).intoArray(callValues,i);
-    }
-
-    private DoubleVector calculateIntermediateValueTwo(@NotNull DoubleVector intermediateValue)
-    {
-        return((((( intermediateValue.mul(1.330274429).sub(1.821255978))
-            .mul(intermediateValue).add(1.781477937))
-            .mul(intermediateValue).sub(0.356563782))
-            .mul(intermediateValue).add(0.319381530))
-            .mul(intermediateValue));
-    }
-
-    private DoubleVector calculateExp(DoubleVector absoluteX)
-    {
-        return ((vectorHalf
-                .neg()
-                .mul(absoluteX)
-                .mul(absoluteX))
-                .lanewise(VectorOperators.EXP));
-    }
-    private DoubleVector calculateIntermediateValueThree(@NotNull DoubleVector dValue, DoubleVector vectorOne, DoubleVector absoluteX, DoubleVector intermediateValueTwo)
-    {
-        DoubleVector expValue = calculateExp(absoluteX);
-        VectorMask<Double> ltZeroMaskltZeroMask = dValue.lt(0.0);
-        DoubleVector intermediateValueThree = vectorOne
-                .sub(0.398942280401)
-                .mul(expValue)
-                .mul(intermediateValueTwo);
-        DoubleVector potentialAnswer = vectorOne.sub(intermediateValueThree);
-        return potentialAnswer.blend(intermediateValueThree, ltZeroMaskltZeroMask);
+        DoubleVector intoArrayVal = (vSpot.mul(cdfValueD1))
+                .sub((vTime
+                        .mul((vIR.mul(vTime).neg()).lanewise(VectorOperators.EXP))
+                        .mul(cdfValueD2)));
+        intoArrayVal.intoArray(callValues,i);
     }
 
     public DoubleVector CDFVectorizedExcel(@NotNull DoubleVector dValue)
     {
-//        create mask to see if negative
         DoubleVector absoluteX = dValue.abs();
-        DoubleVector intermediateValue = vectorOne.div(((absoluteX.mul(0.2316419)).add(1)));
+        DoubleVector tmp = (absoluteX.mul(0.2316419)).add(1);
+        DoubleVector intermediateValue = vectorOne.div(tmp);
         DoubleVector intermediateValueTwo = calculateIntermediateValueTwo(intermediateValue);
-        return calculateIntermediateValueThree(dValue, vectorOne,absoluteX,intermediateValueTwo);
+        DoubleVector tmpValue = absoluteX.mul(absoluteX).mul(0.5).neg();
+        DoubleVector tmpValue2= tmpValue.lanewise(VectorOperators.EXP);
+        DoubleVector intermediateValueThree = vectorOne
+                .sub(tmpValue2
+                        .mul(intermediateValueTwo)
+                        .mul(-0.398942280401));
+        //create mask to see if negative
+        VectorMask<Double> ltZeroMask =  dValue.lt(0.0);
+        DoubleVector blendValue = vectorOne.sub(intermediateValueThree);
+        return blendValue.blend(intermediateValueThree,ltZeroMask);
     }
+    private DoubleVector calculateIntermediateValueTwo(@NotNull DoubleVector intermediateValue)
+    {
+        // horner's rule for polyniomial evaluaion
+//        DoubleVector a = ((((( intermediateValue
+//                .mul(1.330274429)).sub(1.821255978)
+//                .mul(intermediateValue)).add(1.781477937)
+//                .mul(intermediateValue)).sub(0.356563782)
+//                .mul(intermediateValue)).add(0.319381530)
+//                .mul(intermediateValue));
 
-
+        DoubleVector b = intermediateValue.lanewise(VectorOperators.FMA, 1.330274429, -1.821255978);
+        DoubleVector c = intermediateValue.lanewise(VectorOperators.FMA, b, 1.781477937);
+        DoubleVector d = intermediateValue.lanewise(VectorOperators.FMA,c, -0.356563782);
+        return intermediateValue.lanewise(VectorOperators.FMA, d,0.319381530).mul(intermediateValue);
+    }
 
 
 }

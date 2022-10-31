@@ -49,7 +49,8 @@ tasks {
                 "-Xmx16000M", "-XX:NewSize=8G")
         }
         else{
-            defaultJvmOpts = listOf("--enable-preview", "--add-modules", "jdk.incubator.vector","-Xmx16000M", "-XX:NewSize=8G")
+            defaultJvmOpts = listOf("--enable-preview", "--add-modules", "jdk.incubator.vector","-Xmx16000M", "-XX:NewSize=8G",
+                "-XX:+UnlockDiagnosticVMOptions")
         }
     }
     withType<Jar> {
@@ -70,25 +71,28 @@ tasks {
         if (project.hasProperty("debug")) {
             jvmArgs = listOf("--enable-preview", "--add-modules", "jdk.incubator.vector",
                 "-XX:+UnlockDiagnosticVMOptions",
-                "-XX:CompileThreshold=100","-XX:InlineSmallCode=100",
-//                "-XX:+PrintCompilation",  "-XX:+PrintInlining", "-XX:+PrintIntrinsics",
-//                "-XX:+PrintAssembly","-XX:PrintAssemblyOptions=intel",
-                "-Xmx16000M")
+                "-XX:CompileThreshold=50","-XX:InlineSmallCode=100",
+                "-XX:+PrintCompilation",  "-XX:+PrintInlining", "-XX:+PrintIntrinsics",
+                "-XX:+PrintAssembly","-XX:PrintAssemblyOptions=intel",
+                "-Xmx16000M","-XX:NewSize=8G")
         }
         else{
-            jvmArgs = listOf("--enable-preview", "--add-modules", "jdk.incubator.vector","-Xmx16000M")
+            jvmArgs = listOf("--enable-preview", "--add-modules", "jdk.incubator.vector","-Xmx16000M","-XX:NewSize=8G",
+                "-XX:+UnlockDiagnosticVMOptions")
         }
 
     }
     withType<JmhBytecodeGeneratorTask> {
-        jvmArgs.addAll(listOf("--enable-preview", "--add-modules", "jdk.incubator.vector","-Xmx16000M"))
+        jvmArgs.addAll(listOf("--enable-preview", "--add-modules", "jdk.incubator.vector","-Xmx16000M", "-XX:NewSize=8G",
+            "-XX:+UnlockDiagnosticVMOptions"))
     }
     withType<JMHTask> {
-        jvmArgs.addAll(listOf("--enable-preview", "--add-modules", "jdk.incubator.vector","-Xmx16000M", "-XX:NewSize=8G"))
+        jvmArgs.addAll(listOf("--enable-preview", "--add-modules", "jdk.incubator.vector","-Xmx16000M", "-XX:NewSize=8G",
+            "-XX:+UnlockDiagnosticVMOptions"))
         profilers.addAll(listOf("perf","stack", "gc") )// includes the linux perf profiler for ipc and cache miss info
-        warmupIterations.set(3)
-        iterations.set(3)
-        fork.set(2)
+        warmupIterations.set(5)
+        iterations.set(5)
+        fork.set(5)
         resultFormat.set("csv")
 //        logging.captureStandardOutput(LogLevel.LIFECYCLE)
 //        val standardOutput = ByteArrayOutputStream()

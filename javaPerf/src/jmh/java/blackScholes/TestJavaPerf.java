@@ -27,8 +27,7 @@ public class TestJavaPerf {
     JavaSIMD javaSIMD;
     JavaScalar javaScalar;
     NormalDistribution normDist = new NormalDistribution();
-    @Param({"2560000"})
-//    @Param({"256","25600","256000","2560000","25600000"})
+    @Param({"25600","256000","2560000"})
     int arraySize;
     public static final VectorSpecies<Double> SPECIES = DoubleVector.SPECIES_256;
 
@@ -57,7 +56,7 @@ public class TestJavaPerf {
     }
 
     @Benchmark
-    @BenchmarkMode({Mode.AverageTime})
+    @BenchmarkMode(Mode.Throughput)
     @OutputTimeUnit(TimeUnit.SECONDS)
     public void testScalarPerformance(Blackhole bh) {
         for(int i=0;i<arraySize;i++)
@@ -65,10 +64,66 @@ public class TestJavaPerf {
             bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i], i));
         }
     }
+
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
+    @BenchmarkMode(Mode.Throughput)
     @OutputTimeUnit(TimeUnit.SECONDS)
-    public void testVectorPerformance(Blackhole bh) {
+    @Fork(jvmArgsAppend = {"-XX:+UseParallelGC","-XX:CompileThreshold=50","-XX:InlineSmallCode=100"})
+    public void testScalarPerformanceWithParralelGC(Blackhole bh) {
+        for(int i=0;i<arraySize;i++)
+        {
+            bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i], i));
+        }
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    @Fork(jvmArgsAppend = {"-XX:+UseZGC","-XX:CompileThreshold=50","-XX:InlineSmallCode=100"})
+    public void testScalarPerformanceWithZGC(Blackhole bh) {
+        for(int i=0;i<arraySize;i++)
+        {
+            bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i], i));
+        }
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    @Fork(jvmArgsAppend = {"-XX:+UseZGC"})
+    public void testScalarPerformanceWithZGCWithoutInlineChanges(Blackhole bh) {
+        for(int i=0;i<arraySize;i++)
+        {
+            bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i], i));
+        }
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    @CompilerControl(CompilerControl.Mode.DONT_INLINE)
+    public void testScalarPerformanceNoInline(Blackhole bh) {
+        for(int i=0;i<arraySize;i++)
+        {
+            bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i], i));
+        }
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    @Fork(jvmArgsAppend = {"-XX:+UseZGC","-XX:CompileThreshold=10","-XX:InlineSmallCode=150"})
+    public void testScalarPerformanceWithZGCDifferentInlingMetrics(Blackhole bh) {
+        for(int i=0;i<arraySize;i++)
+        {
+            bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i], i));
+        }
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    public void testVectorPerformanceWithDefaultGC(Blackhole bh) {
         int j =0;
         for (var i=0;i<upperBound; i+= SPECIES.length())
         {
@@ -79,16 +134,80 @@ public class TestJavaPerf {
     }
 
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
+    @BenchmarkMode(Mode.Throughput)
     @OutputTimeUnit(TimeUnit.SECONDS)
-    @CompilerControl(CompilerControl.Mode.DONT_INLINE)
-    public void testScalarPerformanceNoInline(Blackhole bh) {
-        for(int i=0;i<arraySize;i++)
+    @Fork(jvmArgsAppend = {"-XX:CompileThreshold=50","-XX:InlineSmallCode=100"})
+    public void testVectorPerformanceWithDefaultGCAndInlining(Blackhole bh) {
+        int j =0;
+        for (var i=0;i<upperBound; i+= SPECIES.length())
         {
-            bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i], i));
+            javaSIMD.calculateBlackScholesSingleCycle(vectorizedArrays[j], i, callValues);
+            j+=1;
+            bh.consume(callValues);
         }
     }
 
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    @Fork(jvmArgsAppend = {"-XX:+UseParallelGC","-XX:CompileThreshold=50","-XX:InlineSmallCode=100"})
+    public void testVectorPerformanceWithParralelGC(Blackhole bh) {
+        int j =0;
+        for (var i=0;i<upperBound; i+= SPECIES.length())
+        {
+            javaSIMD.calculateBlackScholesSingleCycle(vectorizedArrays[j], i, callValues);
+            j+=1;
+            bh.consume(callValues);
+        }
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    @Fork(jvmArgsAppend = {"-XX:+UseZGC","-XX:CompileThreshold=50","-XX:InlineSmallCode=100"})
+    public void testVectorPerformanceWithZGC(Blackhole bh) {
+        int j =0;
+        for (var i=0;i<upperBound; i+= SPECIES.length())
+        {
+            javaSIMD.calculateBlackScholesSingleCycle(vectorizedArrays[j], i, callValues);
+            j+=1;
+            bh.consume(callValues);
+        }
+    }
+
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    @Fork(jvmArgsAppend = {"-XX:+UseZGC"})
+    public void testVectorPerformanceWithZGCWithoutInlineChanges(Blackhole bh) {
+        int j =0;
+        for (var i=0;i<upperBound; i+= SPECIES.length())
+        {
+            javaSIMD.calculateBlackScholesSingleCycle(vectorizedArrays[j], i, callValues);
+            j+=1;
+            bh.consume(callValues);
+        }
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    @Fork(jvmArgsAppend = {"-XX:+UseZGC","-XX:CompileThreshold=10","-XX:InlineSmallCode=150"})
+    public void testVectorPerformanceWithZGCDifferentInlingMetrics(Blackhole bh) {
+        int j =0;
+        for (var i=0;i<upperBound; i+= SPECIES.length())
+        {
+            javaSIMD.calculateBlackScholesSingleCycle(vectorizedArrays[j], i, callValues);
+            j+=1;
+            bh.consume(callValues);
+        }
+    }
+
+    /*
+    * Unrun benchmarks - for historical purposes/testing
+    *
+    * */
 //    @Benchmark
 //    @BenchmarkMode(Mode.Throughput)
 //    @OutputTimeUnit(TimeUnit.SECONDS)
