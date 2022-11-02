@@ -1,6 +1,5 @@
 package blackScholes;
 
-import jdk.incubator.vector.DoubleVector;
 import org.apache.commons.math3.distribution.NormalDistribution;
 
 public class JavaScalar {

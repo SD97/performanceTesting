@@ -1,10 +1,7 @@
 package blackScholes;
-import jdk.incubator.vector.DoubleVector;
-import jdk.incubator.vector.VectorSpecies;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -13,16 +10,16 @@ public class TestBlackScholes {
 
     JavaScalar javaScalar = new JavaScalar();
     JavaSIMD javaSIMD = new JavaSIMD();
-    double[] spotPrices = new double[]{5,10,0.5}; //$ //0.325
-    double[] timeToMaturity = new double[]{5,10,0.5}; //year //0.01
-    double[] strikePrice = new double[]{5,10,0.5}; //$ //0.2
-    double[] interestRate = new double[]{5,10,0.5}; //as a percent //0.325
-    double[] volatility = new double[]{5,10,0.5}; //as a percent //0.325
-    double[] expectedValues = new double[]{1.108,6.322,0.001}; //0.125
+    double[] spotPrices = new double[]{5,10,0.5,3}; //$ //0.325
+    double[] timeToMaturity = new double[]{5,10,0.5,3}; //year //0.01
+    double[] strikePrice = new double[]{5,10,0.5,0.03}; //$ //0.2
+    double[] interestRate = new double[]{5,10,0.5,0.03}; //as a percent //0.325
+    double[] volatility = new double[]{5,10,0.5,0.03}; //as a percent //0.325
+    double[] expectedValues = new double[]{1.108,6.322,0.001,2.97}; //0.125
 
-    VectorSpecies<Double> SPECIES = DoubleVector.SPECIES_PREFERRED;
     public void assertValuesInList(double[] actualValues)
     {
+        System.out.println(Arrays.toString(actualValues));
         for (int i=0;i<expectedValues.length;i++)
         {
             System.out.println(expectedValues[i]);

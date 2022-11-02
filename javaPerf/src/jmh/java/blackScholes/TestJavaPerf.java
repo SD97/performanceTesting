@@ -58,7 +58,7 @@ public class TestJavaPerf {
     @Benchmark
     @BenchmarkMode(Mode.Throughput)
     @OutputTimeUnit(TimeUnit.SECONDS)
-    public void testScalarPerformance(Blackhole bh) {
+    public void testScalarPerformanceDefault(Blackhole bh) {
         for(int i=0;i<arraySize;i++)
         {
             bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i], i));
@@ -68,8 +68,8 @@ public class TestJavaPerf {
     @Benchmark
     @BenchmarkMode(Mode.Throughput)
     @OutputTimeUnit(TimeUnit.SECONDS)
-    @Fork(jvmArgsAppend = {"-XX:+UseParallelGC","-XX:CompileThreshold=50","-XX:InlineSmallCode=100"})
-    public void testScalarPerformanceWithParralelGC(Blackhole bh) {
+    @Fork(jvmArgsAppend = {"-XX:+UseParallelGC"})
+    public void testScalarPerformanceWithParralelGCDefault(Blackhole bh) {
         for(int i=0;i<arraySize;i++)
         {
             bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i], i));
@@ -79,8 +79,8 @@ public class TestJavaPerf {
     @Benchmark
     @BenchmarkMode(Mode.Throughput)
     @OutputTimeUnit(TimeUnit.SECONDS)
-    @Fork(jvmArgsAppend = {"-XX:+UseZGC","-XX:CompileThreshold=50","-XX:InlineSmallCode=100"})
-    public void testScalarPerformanceWithZGC(Blackhole bh) {
+    @Fork(jvmArgsAppend = {"-XX:+UseParallelGC","-XX:CompileThreshold=25","-XX:InlineSmallCode=200","-XX:MaxInlineSize=150"})
+    public void testScalarPerformanceWithParralelGCInlining(Blackhole bh) {
         for(int i=0;i<arraySize;i++)
         {
             bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i], i));
@@ -91,7 +91,18 @@ public class TestJavaPerf {
     @BenchmarkMode(Mode.Throughput)
     @OutputTimeUnit(TimeUnit.SECONDS)
     @Fork(jvmArgsAppend = {"-XX:+UseZGC"})
-    public void testScalarPerformanceWithZGCWithoutInlineChanges(Blackhole bh) {
+    public void testScalarPerformanceWithZGCDefault(Blackhole bh) {
+        for(int i=0;i<arraySize;i++)
+        {
+            bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i], i));
+        }
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    @Fork(jvmArgsAppend = {"-XX:+UseZGC","-XX:CompileThreshold=25","-XX:InlineSmallCode=200","-XX:MaxInlineSize=150"})
+    public void testScalarPerformanceWithZGCInlining(Blackhole bh) {
         for(int i=0;i<arraySize;i++)
         {
             bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i], i));
@@ -103,17 +114,6 @@ public class TestJavaPerf {
     @OutputTimeUnit(TimeUnit.SECONDS)
     @CompilerControl(CompilerControl.Mode.DONT_INLINE)
     public void testScalarPerformanceNoInline(Blackhole bh) {
-        for(int i=0;i<arraySize;i++)
-        {
-            bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i], i));
-        }
-    }
-
-    @Benchmark
-    @BenchmarkMode(Mode.Throughput)
-    @OutputTimeUnit(TimeUnit.SECONDS)
-    @Fork(jvmArgsAppend = {"-XX:+UseZGC","-XX:CompileThreshold=10","-XX:InlineSmallCode=150"})
-    public void testScalarPerformanceWithZGCDifferentInlingMetrics(Blackhole bh) {
         for(int i=0;i<arraySize;i++)
         {
             bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i], i));
@@ -136,7 +136,7 @@ public class TestJavaPerf {
     @Benchmark
     @BenchmarkMode(Mode.Throughput)
     @OutputTimeUnit(TimeUnit.SECONDS)
-    @Fork(jvmArgsAppend = {"-XX:CompileThreshold=50","-XX:InlineSmallCode=100"})
+    @Fork(jvmArgsAppend = {"-XX:CompileThreshold=50","-XX:CompileThreshold=25","-XX:InlineSmallCode=200","-XX:MaxInlineSize=150"})
     public void testVectorPerformanceWithDefaultGCAndInlining(Blackhole bh) {
         int j =0;
         for (var i=0;i<upperBound; i+= SPECIES.length())
@@ -150,8 +150,8 @@ public class TestJavaPerf {
     @Benchmark
     @BenchmarkMode(Mode.Throughput)
     @OutputTimeUnit(TimeUnit.SECONDS)
-    @Fork(jvmArgsAppend = {"-XX:+UseParallelGC","-XX:CompileThreshold=50","-XX:InlineSmallCode=100"})
-    public void testVectorPerformanceWithParralelGC(Blackhole bh) {
+    @Fork(jvmArgsAppend = {"-XX:+UseParallelGC"})
+    public void testVectorPerformanceWithParralelGCDefault(Blackhole bh) {
         int j =0;
         for (var i=0;i<upperBound; i+= SPECIES.length())
         {
@@ -164,8 +164,8 @@ public class TestJavaPerf {
     @Benchmark
     @BenchmarkMode(Mode.Throughput)
     @OutputTimeUnit(TimeUnit.SECONDS)
-    @Fork(jvmArgsAppend = {"-XX:+UseZGC","-XX:CompileThreshold=50","-XX:InlineSmallCode=100"})
-    public void testVectorPerformanceWithZGC(Blackhole bh) {
+    @Fork(jvmArgsAppend = {"-XX:+UseParallelGC","-XX:CompileThreshold=25","-XX:InlineSmallCode=200","-XX:MaxInlineSize=150"})
+    public void testVectorPerformanceWithParralelGCInlining(Blackhole bh) {
         int j =0;
         for (var i=0;i<upperBound; i+= SPECIES.length())
         {
@@ -174,13 +174,12 @@ public class TestJavaPerf {
             bh.consume(callValues);
         }
     }
-
 
     @Benchmark
     @BenchmarkMode(Mode.Throughput)
     @OutputTimeUnit(TimeUnit.SECONDS)
     @Fork(jvmArgsAppend = {"-XX:+UseZGC"})
-    public void testVectorPerformanceWithZGCWithoutInlineChanges(Blackhole bh) {
+    public void testVectorPerformanceWithZGCDefault(Blackhole bh) {
         int j =0;
         for (var i=0;i<upperBound; i+= SPECIES.length())
         {
@@ -193,8 +192,8 @@ public class TestJavaPerf {
     @Benchmark
     @BenchmarkMode(Mode.Throughput)
     @OutputTimeUnit(TimeUnit.SECONDS)
-    @Fork(jvmArgsAppend = {"-XX:+UseZGC","-XX:CompileThreshold=10","-XX:InlineSmallCode=150"})
-    public void testVectorPerformanceWithZGCDifferentInlingMetrics(Blackhole bh) {
+    @Fork(jvmArgsAppend = {"-XX:+UseZGC","-XX:CompileThreshold=25"})
+    public void testVectorPerformanceWithZGCInlining_compileSmaller(Blackhole bh) {
         int j =0;
         for (var i=0;i<upperBound; i+= SPECIES.length())
         {
@@ -203,6 +202,104 @@ public class TestJavaPerf {
             bh.consume(callValues);
         }
     }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    @Fork(jvmArgsAppend = {"-XX:+UseZGC","-XX:InlineSmallCode=200"})
+    public void testVectorPerformanceWithZGCInlining_inlineSmaller(Blackhole bh) {
+        int j =0;
+        for (var i=0;i<upperBound; i+= SPECIES.length())
+        {
+            javaSIMD.calculateBlackScholesSingleCycle(vectorizedArrays[j], i, callValues);
+            j+=1;
+            bh.consume(callValues);
+        }
+    }
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    @Fork(jvmArgsAppend = {"-XX:+UseZGC","-XX:InlineSmallCode=1000"})
+    public void testVectorPerformanceWithZGCInlining_inlineSmaller2(Blackhole bh) {
+        int j =0;
+        for (var i=0;i<upperBound; i+= SPECIES.length())
+        {
+            javaSIMD.calculateBlackScholesSingleCycle(vectorizedArrays[j], i, callValues);
+            j+=1;
+            bh.consume(callValues);
+        }
+    }
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    @Fork(jvmArgsAppend = {"-XX:+UseZGC","-XX:InlineSmallCode=2500"})
+    public void testVectorPerformanceWithZGCInlining_inlineBigger(Blackhole bh) {
+        int j =0;
+        for (var i=0;i<upperBound; i+= SPECIES.length())
+        {
+            javaSIMD.calculateBlackScholesSingleCycle(vectorizedArrays[j], i, callValues);
+            j+=1;
+            bh.consume(callValues);
+        }
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    @Fork(jvmArgsAppend = {"-XX:+UseZGC","-XX:MaxInlineSize=150"})
+    public void testVectorPerformanceWithZGCInlining_MaxInlineSizeBigger(Blackhole bh) {
+        int j =0;
+        for (var i=0;i<upperBound; i+= SPECIES.length())
+        {
+            javaSIMD.calculateBlackScholesSingleCycle(vectorizedArrays[j], i, callValues);
+            j+=1;
+            bh.consume(callValues);
+        }
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    @Fork(jvmArgsAppend = {"-XX:+UseZGC","-XX:CompileThreshold=25","-XX:InlineSmallCode=200"})
+    public void testVectorPerformanceWithZGCInlining_compile25Inline200(Blackhole bh) {
+        int j =0;
+        for (var i=0;i<upperBound; i+= SPECIES.length())
+        {
+            javaSIMD.calculateBlackScholesSingleCycle(vectorizedArrays[j], i, callValues);
+            j+=1;
+            bh.consume(callValues);
+        }
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    @Fork(jvmArgsAppend = {"-XX:+UseZGC","-XX:CompileThreshold=50","-XX:InlineSmallCode=150","-XX:MaxInlineSize=100"})
+    public void testVectorPerformanceWithZGCInlining_all_50_150_100(Blackhole bh) {
+        int j =0;
+        for (var i=0;i<upperBound; i+= SPECIES.length())
+        {
+            javaSIMD.calculateBlackScholesSingleCycle(vectorizedArrays[j], i, callValues);
+            j+=1;
+            bh.consume(callValues);
+        }
+    }
+
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    @Fork(jvmArgsAppend = {"-XX:+UseZGC","-XX:CompileThreshold=25","-XX:InlineSmallCode=200","-XX:MaxInlineSize=150"})
+    public void testVectorPerformanceWithZGCInlining_all_25_200_150(Blackhole bh) {
+        int j =0;
+        for (var i=0;i<upperBound; i+= SPECIES.length())
+        {
+            javaSIMD.calculateBlackScholesSingleCycle(vectorizedArrays[j], i, callValues);
+            j+=1;
+            bh.consume(callValues);
+        }
+    }
+
 
     /*
     * Unrun benchmarks - for historical purposes/testing

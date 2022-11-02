@@ -10,7 +10,6 @@ public class JavaSIMD
     // Vector<Double> is a more generic version
 
     private static final  VectorSpecies<Double> SPECIES = DoubleVector.SPECIES_PREFERRED;
-    private static final DoubleVector vectorHalf=  DoubleVector.broadcast(SPECIES,0.5);
     private static final  DoubleVector vectorOne = DoubleVector.broadcast(SPECIES,1);
 
     double[] blackScholesVectorized(double[] spotPrices, double[] timeToMaturity, double[] strikePrice,
@@ -49,6 +48,9 @@ public class JavaSIMD
         DoubleVector d2 = d1.sub(vVol.mul(vTime.sqrt()));
         //calculate the final call
         calculateD3(vectorArrays, callValues,i,d1,d2);
+//        System.out.println("D1");
+//        System.out.println(Arrays.toString(Arrays.stream(d1.toArray()).toArray()));
+//        System.out.println(Arrays.toString(Arrays.stream(d2.toArray()).toArray()));
     }
 
     private DoubleVector calculateD1(DoubleVector[] vectorArrays)
@@ -69,32 +71,35 @@ public class JavaSIMD
     {
         DoubleVector vSpot =vectorArrays[0];
         DoubleVector vTime =vectorArrays[1];
+        DoubleVector vStrike =vectorArrays[2];
         DoubleVector vIR =vectorArrays[3];
         DoubleVector cdfValueD1 = CDFVectorizedExcel(d1);
         DoubleVector cdfValueD2 = CDFVectorizedExcel(d2);
         DoubleVector intoArrayVal = (vSpot.mul(cdfValueD1))
-                .sub((vTime
+                .sub((vStrike
                         .mul((vIR.mul(vTime).neg()).lanewise(VectorOperators.EXP))
                         .mul(cdfValueD2)));
         intoArrayVal.intoArray(callValues,i);
+//        System.out.println("CDF");
+//        System.out.println(Arrays.toString(Arrays.stream(cdfValueD1.toArray()).toArray()));
+//        System.out.println(Arrays.toString(Arrays.stream(cdfValueD2.toArray()).toArray()));
     }
 
     public DoubleVector CDFVectorizedExcel(@NotNull DoubleVector dValue)
     {
         DoubleVector absoluteX = dValue.abs();
-        DoubleVector tmp = (absoluteX.mul(0.2316419)).add(1);
-        DoubleVector intermediateValue = vectorOne.div(tmp);
+        DoubleVector intermediateValue = vectorOne.div((absoluteX.mul(0.2316419)).add(1));
         DoubleVector intermediateValueTwo = calculateIntermediateValueTwo(intermediateValue);
-        DoubleVector tmpValue = absoluteX.mul(absoluteX).mul(0.5).neg();
-        DoubleVector tmpValue2= tmpValue.lanewise(VectorOperators.EXP);
+        DoubleVector tmpVal = absoluteX.mul(absoluteX).mul(0.5).neg();
+        DoubleVector expValue= tmpVal.lanewise(VectorOperators.EXP);
         DoubleVector intermediateValueThree = vectorOne
-                .sub(tmpValue2
+                .add(expValue //addition because I probably switched values somewhere fml
                         .mul(intermediateValueTwo)
                         .mul(-0.398942280401));
         //create mask to see if negative
         VectorMask<Double> ltZeroMask =  dValue.lt(0.0);
         DoubleVector blendValue = vectorOne.sub(intermediateValueThree);
-        return blendValue.blend(intermediateValueThree,ltZeroMask);
+        return intermediateValueThree.blend(blendValue,ltZeroMask);
     }
     private DoubleVector calculateIntermediateValueTwo(@NotNull DoubleVector intermediateValue)
     {

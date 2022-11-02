@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import numpy as np
 import csv
 from matplotlib.pyplot import figure
 
@@ -45,7 +44,7 @@ def generateLists(filePath):
                     error = line[5].split(" ")
                     ThroughputYValuesErrors.append(float(error[0]))
                     ArraySizes.append(int(line[1]))
-                    TestNames.append(f"{line[0]}_{line[1]}")
+                    TestNames.append(line[0])
                 if "gc.alloc.rate" in line[0]:
                     mem=line[4].split(" ")[0]
                     MemAllocationYValues.append(float(mem))
@@ -79,28 +78,25 @@ def generateGraphs(TotalList,ListDict,filePathToSave):
     y=TotalList[ListDict["ThroughputYValues"]]
     err=TotalList[ListDict["ThroughputYValuesErrors"]]
     labels = TotalList[ListDict["TestNames"]]
-    colors = np.random.rand(36)
     j=0
     k=3
 
     figure(figsize=(15, 15), dpi=500)
-    plt.title("Java Vectorization Performance Comparisions over Increasing Array Sizes")
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.title("Java Vectorization Implementation Performance over Increasing Array Sizes")
+    plt.ylabel('ops/second')
+    plt.xlabel('Array Size (log scale)')
+
     while j<len(x):
-        # plt.plot(x[j:j+k], y[j:j+k], label=labels[j:j+k])
-        # plt.yticks(np.arange(0, max(y), 1000))
-        plt.xticks(np.arange(0, max(x), 50000))
         plt.errorbar(x[j:j+k], y[j:j+k],yerr=err[j:j+k], label=labels[j])
         j+=k
     plt.xticks(rotation='vertical')
-    plt.legend(loc=7,prop={'size': 6})
-    # plt.subplots_adjust(bottom=0.15)
-    # plt.show()
+    plt.legend(loc=1,prop={'size': 6})
     plt.savefig(f"{filePathToSave}JavaVectorVsScalar")
-    plt.yscale("log")
-    plt.savefig(f"{filePathToSave}JavaVectorVsScalar_Log")
     # plt.show()
 
-filePath="../data/data_cutdown.csv"
+filePath= "../data/data_31102022_cutdown.csv"
 filePathToSave="../data/"
 TotalList,ListDict=generateLists(filePath)
 generateGraphs(TotalList,ListDict, filePathToSave)
