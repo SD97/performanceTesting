@@ -97,7 +97,7 @@ Methodology
     - It's the rate of memory being used inside the Young Gen (Which is part of the JVM heap)
     - The Young Gen is split by Eden, S0, S1.
     - The GC of the Young Gen is defined as Minor GC. You have your "Old Mem" and major GC, both of which are still part of the heap mem
-    - Online, it seems < 1GB/second is fine. Remember that the rate of CPU's from its cache is VERY fast/high bandwidth,
+    - Online, it seems < 1GB/second is fine. Not sure what the upper limit would be - I believe DDR4 bandwith to CPU is 25GB/s
       and ~25GB for a Zen3 core I believe
 - Memory allocation rates are important because the more memory being allocated,the more GC tends to be done
     - GC pauses threads while it collects garbage/not used objects - introducing latency and potentially stutter
