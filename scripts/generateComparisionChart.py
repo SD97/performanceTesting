@@ -53,13 +53,13 @@ def generateLists(filePath):
                 if "gc.count" in line[0]:
                     if "≈" in line[4]:
                         count = line[4].split(" ")
-                        GCCountYValues.append(count[1])
+                        GCCountYValues.append(float(count[1]))
                     else:
-                        GCCountYValues.append(line[4])
+                        GCCountYValues.append(float(line[4]))
                 if "gc.time" in line[0]:
-                    GCTimeYValues.append(line[4])
+                    GCTimeYValues.append(float(line[4]))
                 while len(GCTimeYValues)<len(GCCountYValues)-1:
-                    GCTimeYValues.append("0")
+                    GCTimeYValues.append(0)
             trackValue+=1
     print(len(TotalList))
     print(len(TestNames))
@@ -73,30 +73,66 @@ def generateLists(filePath):
     print(ThroughputYValuesErrors)
     return TotalList, ListDict
 
-def generateGraphs(TotalList,ListDict,filePathToSave):
-    x=TotalList[ListDict["ArraySizes"]]
-    y=TotalList[ListDict["ThroughputYValues"]]
-    err=TotalList[ListDict["ThroughputYValuesErrors"]]
-    labels = TotalList[ListDict["TestNames"]]
-    j=0
-    k=3
+def generateGraphs(TotalList,titleList,yTitleList,fileNameList):
+    initialVal=0
+    increment=3
+    for title,yTitle,fileName in zip(titleList,yTitleList,fileNameList):
+        if fileName == "JavaVectorVsScalarThroughput":
+            x = TotalList[ListDict["ArraySizes"]]
+            y = TotalList[ListDict["ThroughputYValues"]]
+            err = TotalList[ListDict["ThroughputYValuesErrors"]]
+            labels = TotalList[ListDict["TestNames"]]
+            generateActualGraph(xArray=x, yArray=y,errArray=err,labelArray=labels,initialValue=initialVal,incrementValue=increment,
+                                title=title, yTitle=yTitle,
+                                fileName=fileName, loc=1)
+        elif fileName == "JavaVectorVsScalarMemAllocationRate":
+            x = TotalList[ListDict["ArraySizes"]]
+            y = TotalList[ListDict["MemAllocationYValues"]]
+            err = TotalList[ListDict["MemAllocationYValuesErrors"]]
+            labels = TotalList[ListDict["TestNames"]]
+            generateActualGraph(xArray=x, yArray=y,errArray=err,labelArray=labels,initialValue=initialVal,incrementValue=increment,
+                                title=title, yTitle=yTitle,
+                                fileName=fileName, loc=7)
+        elif fileName == "JavaVectorVsScalarGCCount":
+            x = TotalList[ListDict["ArraySizes"]]
+            y = TotalList[ListDict["GCCountYValues"]]
+            err = [0] * len(x)
+            labels = TotalList[ListDict["TestNames"]]
+            generateActualGraph(xArray=x, yArray=y,errArray=err,labelArray=labels,initialValue=initialVal,incrementValue=increment,
+                                title=title, yTitle=yTitle,
+                                fileName=fileName, loc=1)
+        elif fileName == "JavaVectorVsScalarGCTime":
+            x = TotalList[ListDict["ArraySizes"]]
+            y = TotalList[ListDict["GCTimeYValues"]]
+            err = [0]*len(x)
+            labels = TotalList[ListDict["TestNames"]]
+            generateActualGraph(xArray=x, yArray=y,errArray=err,labelArray=labels,initialValue=initialVal,incrementValue=increment,
+                                title=title, yTitle=yTitle,
+                                fileName=fileName, loc=1)
 
+def generateActualGraph(xArray,yArray,errArray,labelArray, initialValue, incrementValue, title,yTitle, fileName, loc):
     figure(figsize=(15, 15), dpi=500)
     plt.xscale("log")
     plt.yscale("log")
-    plt.title("Java Vectorization Implementation Performance over Increasing Array Sizes")
-    plt.ylabel('ops/second')
+    plt.title(title)
+    plt.ylabel(yTitle)
     plt.xlabel('Array Size (log scale)')
-
-    while j<len(x):
-        plt.errorbar(x[j:j+k], y[j:j+k],yerr=err[j:j+k], label=labels[j])
+    j=initialValue
+    k=incrementValue
+    while j<len(xArray):
+        plt.errorbar(xArray[j:j+k], yArray[j:j+k],yerr=errArray[j:j+k], label=labelArray[j])
         j+=k
     plt.xticks(rotation='vertical')
-    plt.legend(loc=1,prop={'size': 6})
-    plt.savefig(f"{filePathToSave}JavaVectorVsScalar")
-    # plt.show()
+    plt.legend(loc=loc,prop={'size': 6})
+    plt.savefig(f"{filePathToSave}{fileName}")
 
 filePath= "../data/data_31102022_cutdown.csv"
 filePathToSave="../data/"
+titleList=["Java Vectorization Implementation Throughput over Increasing Array Sizes",
+           "Java Vectorization Implementation Mmeory Allocation over Increasing Array Sizes",
+           "Java Vectorization Implementation GC Count over Increasing Array Sizes",
+           "Java Vectorization Implementation GC Time over Increasing Array Sizes",]
+yTitleList=["ops/second", "MB/s","amount", "ms"]
+fileNameList=["JavaVectorVsScalarThroughput","JavaVectorVsScalarMemAllocationRate","JavaVectorVsScalarGCCount","JavaVectorVsScalarGCTime"]
 TotalList,ListDict=generateLists(filePath)
-generateGraphs(TotalList,ListDict, filePathToSave)
+generateGraphs(TotalList,titleList,yTitleList,fileNameList)
