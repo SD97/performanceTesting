@@ -1,7 +1,6 @@
  Performance Testing
 -
-- This is a java repository designed to compare different implementations of the Black Scholes formula (and other things) in regard to
-  performance
+- This is a java/cpp repository designed to compare different implementations of the Black Scholes formula (and other things) with regards to performance
 - Ultimately, I want to compare implementations of this formula in other languages as well (not there yet!)
 - Perhaps one day other things like Monte-Carlo simulations and matrix multiplications.
 - Currently, we just compare scalar and vectorized implementations of the Black Scholes formula

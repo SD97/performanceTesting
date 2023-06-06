@@ -1,0 +1,5 @@
+build --copt=-mavx2  --copt=-mfma
+build --cxxopt=-std=c++17 --cxxopt=-g
+
+build:debug -c dbg
+build:debug --features=oso_prefix_is_pwd

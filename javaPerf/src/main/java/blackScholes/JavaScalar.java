@@ -20,11 +20,11 @@ public class JavaScalar {
         for (int i=0;i<spotPrices.length;i++)
         {
             double[] scalarArrays = createScalarArrays(spotPrices, timeToMaturity, strikePrice, interestRate, volatility, i);
-            callValues[i]=calculateBlackScholesSingleCycle(scalarArrays, i);
+            callValues[i]=calculateBlackScholesSingleCycle(scalarArrays);
         }
         return callValues;
     }
-    public double calculateBlackScholesSingleCycle(double[] scalarArrays, int i)
+    public double calculateBlackScholesSingleCycle(double[] scalarArrays)
     {
 //        System.out.println(scalarArrays);
         double volatilityScaled = scalarArrays[4]/100.0;

@@ -1,0 +1,76 @@
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+http_archive(
+  name = "com_google_googletest",
+  urls = ["https://github.com/google/googletest/archive/5ab508a01f9eb089207ee87fd547d290da39d015.zip"],
+  strip_prefix = "googletest-5ab508a01f9eb089207ee87fd547d290da39d015",
+)
+
+#http_archive(
+#  name = "libpfm4",
+#  urls = [
+#      "https://sourceforge.net/projects/perfmon2/files/libpfm4/libpfm-4.12.1.tar.gz",
+#  ],
+#  sha256 = "be8a991edceb8aee749f3d26aeec2b34dc4cd1b9d76245d78eda9640be07a626",
+##  strip_prefix = "libpfm-4.12.1",
+#)
+
+#git_repository(
+#  name = "libpfm4",
+#  remote = "https://github.com/wcohen/libpfm4.git",
+#  tag = "v4.8.0",
+#)
+
+# Support for building foreign build system dependencies. Needed for libpfm.
+http_archive(
+   name = "rules_foreign_cc", # 2023-01-25
+   sha256 = "040ab3cc71356c186230e8c6c8d147dc533a83c72e3e9b4244a36cd9cf18179d",
+   strip_prefix = "rules_foreign_cc-1e66c02ea867d91312a1e14c1d3f78ccbe0d8bc8",
+   url = "https://github.com/bazelbuild/rules_foreign_cc/archive/1e66c02ea867d91312a1e14c1d3f78ccbe0d8bc8.zip",
+)
+load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")
+
+rules_foreign_cc_dependencies()
+
+# libpfm4, for perf counters
+http_archive(
+    name = "libpfm", # 2023-01-12
+    # use our own build file, based from google/benchmark/tools, but modified to
+    # disable use-after-free, which is emitted when building libpfm.
+    build_file_content = """
+load("@rules_foreign_cc//foreign_cc:defs.bzl", "make")
+filegroup(
+    name = "pfm_srcs",
+    srcs = glob(["**"]),
+)
+make(
+    name = "libpfm",
+    lib_source = ":pfm_srcs",
+    lib_name = "libpfm",
+    # this disables debug mode. In particular, this makes sure certain
+    # warning-as-error of libpfm aren't surfaced, which would break the build.
+    args = ["DBG="],
+    visibility = [
+        "//visibility:public",
+    ],
+)
+    """,
+    sha256 = "d18b97764c755528c1051d376e33545d0eb60c6ebf85680436813fa5b04cc3d1",
+    type = "tar.gz",
+    strip_prefix = "libpfm-4.13.0",
+    urls = ["https://sourceforge.net/projects/perfmon2/files/libpfm4/libpfm-4.13.0.tar.gz/download"],
+ )
+
+git_repository(
+  name = "com_google_benchmark",
+  remote = "https://github.com/google/benchmark.git",
+  tag = "v1.7.1",
+)
+
+#unit testing
+http_archive(
+  name = "com_google_googletest",
+  urls = ["https://github.com/google/googletest/archive/5ab508a01f9eb089207ee87fd547d290da39d015.zip"],
+  strip_prefix = "googletest-b796f7d44681514f58a683a3a71ff17c94edb0c1",
+)

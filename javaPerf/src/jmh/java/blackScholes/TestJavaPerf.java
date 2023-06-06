@@ -6,7 +6,6 @@ import org.apache.commons.math3.distribution.NormalDistribution;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import static blackScholes.JavaScalar.createScalarArrays;
@@ -61,7 +60,7 @@ public class TestJavaPerf {
     public void testScalarPerformanceDefault(Blackhole bh) {
         for(int i=0;i<arraySize;i++)
         {
-            bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i], i));
+            bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i]));
         }
     }
 
@@ -72,7 +71,7 @@ public class TestJavaPerf {
     public void testScalarPerformanceWithParralelGCDefault(Blackhole bh) {
         for(int i=0;i<arraySize;i++)
         {
-            bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i], i));
+            bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i]));
         }
     }
 
@@ -83,7 +82,7 @@ public class TestJavaPerf {
     public void testScalarPerformanceWithParralelGCInlining(Blackhole bh) {
         for(int i=0;i<arraySize;i++)
         {
-            bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i], i));
+            bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i]));
         }
     }
 
@@ -94,7 +93,7 @@ public class TestJavaPerf {
     public void testScalarPerformanceWithZGCDefault(Blackhole bh) {
         for(int i=0;i<arraySize;i++)
         {
-            bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i], i));
+            bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i]));
         }
     }
 
@@ -105,7 +104,7 @@ public class TestJavaPerf {
     public void testScalarPerformanceWithZGCInlining(Blackhole bh) {
         for(int i=0;i<arraySize;i++)
         {
-            bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i], i));
+            bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i]));
         }
     }
 
@@ -116,7 +115,7 @@ public class TestJavaPerf {
     public void testScalarPerformanceNoInline(Blackhole bh) {
         for(int i=0;i<arraySize;i++)
         {
-            bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i], i));
+            bh.consume(javaScalar.calculateBlackScholesSingleCycle(scalarArrays[i]));
         }
     }
 

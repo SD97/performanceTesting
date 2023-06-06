@@ -1,5 +1,22 @@
 .gradle
+.idea/
+.vscode/
 /build/
+/javaPerf/build/
+/olddata/
+/rawdata/
+/cppPerf/build/
+/cppPerf/bazel-bin
+/cppPerf/bazel-cppPerf
+/cppPerf/bazel-out
+/cppPerf/bazel-testlogs
+/cppPerf/src/bazel-bin
+/cppPerf/src/bazel-cppPerf
+/cppPerf/src/bazel-out
+/cppPerf/src/bazel-testlogs
+# External Libraries I didn't include
+/cppPerf/src/main/cpp/Eigen/
+/cppPerf/src/externalLibs/
 
 # Ignore Gradle GUI config
 gradle-app.setting
